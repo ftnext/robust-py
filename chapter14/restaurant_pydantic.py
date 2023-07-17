@@ -1,7 +1,7 @@
 from typing import Literal
 
 import yaml  # type: ignore[import]
-from pydantic import PositiveInt, ValidationError, conlist, constr
+from pydantic import PositiveInt, ValidationError, conlist, constr, validator
 from pydantic.dataclasses import dataclass
 
 
@@ -52,6 +52,14 @@ class Restaurant:
     to_go: bool
     delivery: bool
 
+    @validator("employees")
+    def check_chef_and_server(cls, employees):
+        if any(e for e in employees if e.position == "Chef") and any(
+            e for e in employees if e.position == "Server"
+        ):
+            return employees
+        raise ValueError("Must have at least one chef and one server")
+
 
 def load_restaurant(filename: str) -> Restaurant:
     with open(filename) as yaml_file:
@@ -95,6 +103,35 @@ if __name__ == "__main__":
                     ),
                 ],
                 "dishes": [Dish("abc", 20, "A"), Dish("def", 55, "D")],
+                "number_of_seats": 5,
+                "to_go": False,
+                "delivery": True,
+            }
+        )
+        assert False, "should not have been able to construct Restaurant"
+    except ValidationError:
+        pass
+    try:
+        _ = Restaurant(
+            **{  # type: ignore[arg-type]
+                "name": "Dine n Dash",
+                "owner": "Pat Viafore",
+                "address": "123 Fake St.",
+                "employees": [
+                    Employee("Pat", "Chef", Address("dummy")),
+                    Employee(
+                        "Joe",
+                        "Chef",  # No Server
+                        BankDetails(
+                            AccountAndRoutingNumber("7" * 9, "0123456789")
+                        ),
+                    ),
+                ],
+                "dishes": [
+                    Dish("abc", 20, "A"),
+                    Dish("def", 55, "D"),
+                    Dish("ghi", 100, "G"),
+                ],
                 "number_of_seats": 5,
                 "to_go": False,
                 "delivery": True,
