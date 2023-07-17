@@ -1,7 +1,13 @@
 from typing import Literal
 
 import yaml  # type: ignore[import]
-from pydantic import PositiveInt, ValidationError, conlist, constr, validator
+from pydantic import (
+    PositiveInt,
+    ValidationError,
+    conlist,
+    constr,
+    field_validator,
+)
 from pydantic.dataclasses import dataclass
 
 
@@ -43,16 +49,17 @@ class Dish:
 
 @dataclass
 class Restaurant:
-    name: constr(regex=r"^[a-zA-Z0-9 ]*$", min_length=1, max_length=16)
+    name: constr(pattern=r"^[a-zA-Z0-9 ]*$", min_length=1, max_length=16)
     owner: constr(min_length=1)
     address: constr(min_length=1)
-    employees: conlist(Employee, min_items=2)
-    dishes: conlist(Dish, min_items=3)
+    employees: conlist(Employee, min_length=2)
+    dishes: conlist(Dish, min_length=3)
     number_of_seats: PositiveInt
     to_go: bool
     delivery: bool
 
-    @validator("employees")
+    @field_validator("employees")
+    @classmethod
     def check_chef_and_server(cls, employees):
         if any(e for e in employees if e.position == "Chef") and any(
             e for e in employees if e.position == "Server"
