@@ -1,7 +1,7 @@
 from typing import Literal
 
 import yaml  # type: ignore[import]
-from pydantic import PositiveInt, ValidationError, constr
+from pydantic import PositiveInt, ValidationError, conlist, constr
 from pydantic.dataclasses import dataclass
 
 
@@ -46,8 +46,8 @@ class Restaurant:
     name: constr(regex=r"^[a-zA-Z0-9 ]*$", min_length=1, max_length=16)
     owner: constr(min_length=1)
     address: constr(min_length=1)
-    employees: list[Employee]
-    dishes: list[Dish]
+    employees: conlist(Employee, min_items=2)
+    dishes: conlist(Dish, min_items=3)
     number_of_seats: PositiveInt
     to_go: bool
     delivery: bool
@@ -71,6 +71,31 @@ if __name__ == "__main__":
                 "employees": [],
                 "dishes": [],
                 "number_of_seats": -5,
+                "to_go": False,
+                "delivery": True,
+            }
+        )
+        assert False, "should not have been able to construct Restaurant"
+    except ValidationError:
+        pass
+    try:
+        _ = Restaurant(
+            **{  # type: ignore[arg-type]
+                "name": "Dine n Dash",
+                "owner": "Pat Viafore",
+                "address": "123 Fake St.",
+                "employees": [
+                    Employee("Pat", "Chef", Address("dummy")),
+                    Employee(
+                        "Joe",
+                        "Server",
+                        BankDetails(
+                            AccountAndRoutingNumber("7" * 9, "0123456789")
+                        ),
+                    ),
+                ],
+                "dishes": [Dish("abc", 20, "A"), Dish("def", 55, "D")],
+                "number_of_seats": 5,
                 "to_go": False,
                 "delivery": True,
             }
