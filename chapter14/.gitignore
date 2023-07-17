@@ -1,0 +1,4 @@
+# Download with `make prepare`
+restaurant.yaml
+missing.yaml
+wrong_type.yaml
